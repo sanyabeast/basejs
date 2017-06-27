@@ -54,18 +54,18 @@
 		},
 	};
 	/*base*/
-	var base = function(desc, value){
+	var base = function(rawdesc, value){
 		if (typeof value == "undefined"){
-			return base.get(desc);
+			return base.get(rawdesc);
 		} else {
-			base.set(desc, value);
+			base.set(rawdesc, value);
 		}
 	};
 
 	base.content = {};
 
-	base.on = function(desc, eventName, callback, obsName){
-		var desc = desc.split("::");
+	base.on = function(rawdesc, eventName, callback, obsName){
+		var desc = rawdesc.split("::");
 		var path = desc[0];
 		var name = desc[1];
 
@@ -76,8 +76,8 @@
 		}
 	};
 
-	base.off = function(desc, eventName, obsName){
-		var desc = desc.split("::");
+	base.off = function(rawdesc, eventName, obsName){
+		var desc = rawdesc.split("::");
 		var path = desc[0];
 		var name = desc[1];
 
@@ -111,8 +111,8 @@
 		return curr;
 	};
 
-	base.set = function(/*str*/desc, /*any*/value){
-		var desc = desc.split("::");
+	base.set = function(/*str*/rawdesc, /*any*/value){
+		var desc = rawdesc.split("::");
 		var path = desc[0];
 		var name = desc[1];
 
@@ -121,13 +121,13 @@
 		if (dir[name] instanceof Value){
 			dir[name].set(value);	
 		} else {
-			dir[name] = new Value(path, name, value);
+			dir[name] = base.flat[rawdesc] = new Value(path, name, value);
 		}	
 
 	};
 
-	base.get = function(/*str*/desc){
-		var desc = desc.split("::");
+	base.get = function(/*str*/rawdesc){
+		var desc = rawdesc.split("::");
 		var path = desc[0];
 		var name = desc[1];
 
@@ -159,7 +159,11 @@
 				}
 			}
 		}
-	}
+	};
+
+
+	base.flat = {};
+	base.Value = Value;
 
 	return base;
 
