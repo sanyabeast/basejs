@@ -1,11 +1,11 @@
-'use strict';
-'use strict';
+"use strict";
+"use strict";
 
 (function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
         define(factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
         // Node. Does not work with strict CommonJS, but
         // only CommonJS-like environments that support module.exports,
         // like Node.
@@ -27,27 +27,35 @@
 	};
 
 	Value.prototype = {
-		on : function(eventName, callback){
-			this._cbs[eventName].push(callback);
+		get value(){
+			return this.get();
+		},
+		set value(value){
+			this.set(value);
+		},
+		on : function(eventName, callback, obsName){
+			obsName = obsName || Math.random().toString(36).substring(2);
+			this._cbs[eventName][obsName] = callback;
+		},
+		off : function(eventName, obsName){
+			delete this._cbs[eventName][obsName];
 		},
 		set : function(value){
 			this._value = value;
-			if (this._cbs.change.length > 0){
-				this._dispatch('change');
-			}
+			this._dispatch("change");
 		},
 		get : function(){
-			return (typeof this._value == 'function' ? this._value() : this._value);
+			return (typeof this._value == "function" ? this._value() : this._value);
 		},
 		_dispatch : function(eventName){
-			for (var a = 0, l = this._cbs[eventName].length; a < l; a++){
+			for (var a in this._cbs[eventName]){
 				this._cbs[eventName][a](this.get(), this);
 			}
 		},
 	};
 	/*base*/
 	var base = function(desc, value){
-		if (typeof value == 'undefined'){
+		if (typeof value == "undefined"){
 			return base.get(desc);
 		} else {
 			base.set(desc, value);
@@ -56,7 +64,7 @@
 
 	base.content = {};
 
-	base.on = function(desc, eventName, callback){
+	base.on = function(desc, eventName, callback, obsName){
 		var desc = desc.split("::");
 		var path = desc[0];
 		var name = desc[1];
@@ -64,7 +72,19 @@
 		var dir = this.path(path);
 
 		if (dir[name] instanceof Value){
-			dir[name].on(eventName, callback);
+			dir[name].on(eventName, callback, obsName);
+		}
+	};
+
+	base.off = function(desc, eventName, obsName){
+		var desc = desc.split("::");
+		var path = desc[0];
+		var name = desc[1];
+
+		var dir = this.path(path);
+
+		if (dir[name] instanceof Value){
+			dir[name].off(eventName, obsName);
 		}
 	};
 
@@ -123,6 +143,22 @@
 	base.remove = function(/*str*/name){
 		delete this.content[name];
 		delete this.getters[name];
+	};
+
+	base.log = function(){
+
+		logLvl(base.content, "");
+
+		function logLvl(data, levelPrefix){
+			for (var k in data){
+				if (!(data[k] instanceof Value)){
+					console.log(levelPrefix + " "+ k);
+					logLvl(data[k], levelPrefix + "--");
+				} else {
+					console.log(levelPrefix + " ::" + k);
+				}
+			}
+		}
 	}
 
 	return base;
