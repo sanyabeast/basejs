@@ -61,10 +61,10 @@
 		var path = desc[0];
 		var name = desc[1];
 
-		path = this.path(path);
+		var dir = this.path(path);
 
-		if (path[name] instanceof Value){
-			path[name].on(eventName, callback);
+		if (dir[name] instanceof Value){
+			dir[name].on(eventName, callback);
 		}
 	};
 
@@ -96,14 +96,12 @@
 		var path = desc[0];
 		var name = desc[1];
 
-		console.log(path);
+		var dir = this.path(path);
 
-		path = this.path(path);
-
-		if (path[name] instanceof Value){
-			path[name].set(value);	
+		if (dir[name] instanceof Value){
+			dir[name].set(value);	
 		} else {
-			path[name] = new Value(path, name, value);
+			dir[name] = new Value(path, name, value);
 		}	
 
 	};
@@ -113,10 +111,10 @@
 		var path = desc[0];
 		var name = desc[1];
 
-		path = this.path(path);
+		var dir = this.path(path);
 
-		if (path[name] instanceof Value){
-			return path[name].get();
+		if (dir[name] instanceof Value){
+			return dir[name].get();
 		} else {
 			return null;
 		}
