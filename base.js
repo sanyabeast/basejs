@@ -121,9 +121,16 @@
 		if (dir[name] instanceof Value){
 			dir[name].set(value);	
 		} else {
-			dir[name] = base.flat[rawdesc] = new Value(path, name, value);
+			console.log(1);
+			var value = new Value(path, name, value);
+			dir[name] = value;
+			
+			Object.defineProperty(base.flat, rawdesc, {
+				get : function(){
+					return value.get();
+				}
+			});
 		}	
-
 	};
 
 	base.get = function(/*str*/rawdesc){
