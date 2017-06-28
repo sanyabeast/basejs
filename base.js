@@ -1,6 +1,4 @@
 "use strict";
-"use strict";
-
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
@@ -16,8 +14,8 @@
     }
 }(this, function(){
 
-    /*value*/
-	var Value = function(path, name, value){
+    /*item*/
+	var Item = function(path, name, value){
 		this._path = path;
 		this._name = name;
 		this._value = value;
@@ -26,7 +24,7 @@
 		};
 	};
 
-	Value.prototype = {
+	Item.prototype = {
 		get value(){
 			return this.get();
 		},
@@ -53,6 +51,22 @@
 			}
 		},
 	};
+
+	/*dir*/
+	var Dir = function(path, base){
+		this._base = base;
+		this._path = path || "";
+	};
+
+	Dir.prototype = {
+		set : function(name, value){
+			this._base.set(this._path + "::" + name, value);
+		},
+		get : function(name){
+			return this._base.get(this._path + "::" + name);
+		} 
+	};
+
 	/*base*/
 	var base = function(rawdesc, value){
 		if (typeof value == "undefined"){
@@ -62,7 +76,7 @@
 		}
 	};
 
-	base.content = {};
+	base.content = new Dir("", base);
 
 	base.on = function(rawdesc, eventName, callback, obsName){
 		var desc = rawdesc.split("::");
@@ -71,7 +85,7 @@
 
 		var dir = this.path(path);
 
-		if (dir[name] instanceof Value){
+		if (dir[name] instanceof Item){
 			dir[name].on(eventName, callback, obsName);
 		}
 	};
@@ -83,7 +97,7 @@
 
 		var dir = this.path(path);
 
-		if (dir[name] instanceof Value){
+		if (dir[name] instanceof Item){
 			dir[name].off(eventName, obsName);
 		}
 	};
@@ -92,7 +106,7 @@
 		path = this.path(path);
 
 		for (var k in path){
-			if (path[k] instanceof Value){
+			if (path[k] instanceof Item){
 				callback(path[k].get(), path[k], k);
 			}
 		}
@@ -100,12 +114,15 @@
 
 	base.path = function(path){
 		var curr = this.content;
+		var dirPath = "";
 
 		path = path.split(".");
 
 		for (var a = 0, l = path.length; a < l; a++){
-			curr[path[a]] = curr[path[a]] || {};
+			dirPath = (a == 0) ? path[a] : dirPath + "." + path[a];
+			curr[path[a]] = curr[path[a]] || new Dir(dirPath, base);
 			curr = curr[path[a]];
+			
 		}
 
 		return curr;
@@ -118,35 +135,36 @@
 
 		var dir = this.path(path);
 
-		if (dir[name] instanceof Value){
+		if (dir[name] instanceof Item){
 			dir[name].set(value);	
 		} else {
-			var value = new Value(path, name, value);
-			dir[name] = value;
+			var item = new Item(path, name, value);
+			dir[name] = item;
 			
 			Object.defineProperty(base.flat, rawdesc, {
 				get : function(){
-					return value.get();
+					return item.get();
 				},
-				set : function(newValue){
-					value.set(newValue);
+				set : function(value){
+					item.set(value);
 				}
 			});
 		}	
 	};
 
 	base.get = function(/*str*/rawdesc){
-		var desc = rawdesc.split("::");
-		var path = desc[0];
-		var name = desc[1];
+		return this.flat[rawdesc];
+		// var desc = rawdesc.split("::");
+		// var path = desc[0];
+		// var name = desc[1];
 
-		var dir = this.path(path);
+		// var dir = this.path(path);
 
-		if (dir[name] instanceof Value){
-			return dir[name].get();
-		} else {
-			return null;
-		}
+		// if (dir[name] instanceof Item){
+		// 	return dir[name].get();
+		// } else {
+		// 	return null;
+		// }
 	};
 
 	base.remove = function(/*str*/name){
@@ -160,7 +178,7 @@
 
 		function logLvl(data, levelPrefix){
 			for (var k in data){
-				if (!(data[k] instanceof Value)){
+				if (!(data[k] instanceof Item)){
 					console.log(levelPrefix + " "+ k);
 					logLvl(data[k], levelPrefix + "--");
 				} else {
@@ -172,7 +190,7 @@
 
 
 	base.flat = {};
-	base.Value = Value;
+	base.Item = Item;
 
 	return base;
 
