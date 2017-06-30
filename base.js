@@ -1,4 +1,6 @@
 "use strict";
+"use strict";
+
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
@@ -15,57 +17,74 @@
 }(this, function(){
 
     /*item*/
-	var Item = function(path, name, value){
-		this._path = path;
-		this._name = name;
+	var Item = function(base, path, name, value){
+
+		Object.defineProperty(this, "base", {
+			value : base,
+			enumerable : false
+		});
+
+		Object.defineProperty(this, "path", {
+			value : path,
+			enumerable : false
+		});
+
+		Object.defineProperty(this, "name", {
+			value : name,
+			enumerable : false
+		});
+
 		this._value = value;
-		this._cbs = {
-			change : []
-		};
 	};
 
 	Item.prototype = {
+		get fullpath(){
+			return this.path + "::" + this.name;
+		},
 		get value(){
 			return this.get();
 		},
 		set value(value){
 			this.set(value);
 		},
-		on : function(eventName, callback, obsName){
-			obsName = obsName || Math.random().toString(36).substring(2);
-			this._cbs[eventName][obsName] = callback;
-		},
-		off : function(eventName, obsName){
-			delete this._cbs[eventName][obsName];
-		},
 		set : function(value){
 			this._value = value;
 			this._dispatch("change");
 		},
 		get : function(){
-			return (typeof this._value == "function" ? this._value() : this._value);
+			return this._value;
 		},
 		_dispatch : function(eventName){
-			for (var a in this._cbs[eventName]){
-				this._cbs[eventName][a](this.get(), this);
-			}
-		},
+			this.base._dispatch(this.fullpath, eventName);
+		}
 	};
 
 	/*dir*/
 	var Dir = function(path, base){
-		this._base = base;
-		this._path = path || "";
+		Object.defineProperty(this, "base", {
+			value : base,
+			enumerable : false
+		});
+
+		Object.defineProperty(this, "path", {
+			value : path || "",
+			enumerable : false
+		});
 	};
 
-	Dir.prototype = {
-		set : function(name, value){
-			this._base.set(this._path + "::" + name, value);
+	Object.defineProperty(Dir.prototype, "set", {
+		value : function(name, value){
+			this.base.set(this.path + "::" + name, value);
 		},
-		get : function(name){
-			return this._base.get(this._path + "::" + name);
-		} 
-	};
+		enumerable : false
+	});
+
+	Object.defineProperty(Dir.prototype, "get", {
+		value : function(name){
+			return this.base.get(this.path + "::" + name);
+		},
+		enumerable : false
+	});
 
 	/*base*/
 	var base = function(rawdesc, value){
@@ -78,27 +97,27 @@
 
 	base.content = new Dir("", base);
 
+	base.eventsHandlers = {};
+
 	base.on = function(rawdesc, eventName, callback, obsName){
-		var desc = rawdesc.split("::");
-		var path = desc[0];
-		var name = desc[1];
-
-		var dir = this.path(path);
-
-		if (dir[name] instanceof Item){
-			dir[name].on(eventName, callback, obsName);
-		}
+		obsName = obsName || Math.random().toString(36).substring(2);
+		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
+		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
+		this.eventsHandlers[rawdesc][eventName][obsName] = callback;
 	};
 
 	base.off = function(rawdesc, eventName, obsName){
-		var desc = rawdesc.split("::");
-		var path = desc[0];
-		var name = desc[1];
+		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
+		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
+		delete this.eventsHandlers[rawdesc][eventName][obsName];
+	};
 
-		var dir = this.path(path);
+	base._dispatch = function(rawdesc, eventName){
+		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
+		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
 
-		if (dir[name] instanceof Item){
-			dir[name].off(eventName, obsName);
+		for (var k in this.eventsHandlers[rawdesc][eventName]){
+			this.eventsHandlers[rawdesc][eventName][k](base.get(rawdesc));
 		}
 	};
 
@@ -138,7 +157,7 @@
 		if (dir[name] instanceof Item){
 			dir[name].set(value);	
 		} else {
-			var item = new Item(path, name, value);
+			var item = new Item(base, path, name, value);
 			dir[name] = item;
 			
 			Object.defineProperty(base.flat, rawdesc, {
@@ -149,22 +168,13 @@
 					item.set(value);
 				}
 			});
+
+			item.set(value);
 		}	
 	};
 
 	base.get = function(/*str*/rawdesc){
 		return this.flat[rawdesc];
-		// var desc = rawdesc.split("::");
-		// var path = desc[0];
-		// var name = desc[1];
-
-		// var dir = this.path(path);
-
-		// if (dir[name] instanceof Item){
-		// 	return dir[name].get();
-		// } else {
-		// 	return null;
-		// }
 	};
 
 	base.remove = function(/*str*/name){
