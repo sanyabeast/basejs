@@ -100,10 +100,11 @@
 	base.eventsHandlers = {};
 
 	base.on = function(rawdesc, eventName, callback, obsName){
-		obsName = obsName || Math.random().toString(36).substring(2);
+		obsName = obsName || ("sub-" + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2));
 		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
 		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
 		this.eventsHandlers[rawdesc][eventName][obsName] = callback;
+    return obsName;
 	};
 
 	base.off = function(rawdesc, eventName, obsName){
@@ -141,7 +142,7 @@
 			dirPath = (a == 0) ? path[a] : dirPath + "." + path[a];
 			curr[path[a]] = curr[path[a]] || new Dir(dirPath, base);
 			curr = curr[path[a]];
-			
+
 		}
 
 		return curr;
@@ -155,11 +156,11 @@
 		var dir = this.path(path);
 
 		if (dir[name] instanceof Item){
-			dir[name].set(value);	
+			dir[name].set(value);
 		} else {
 			var item = new Item(base, path, name, value);
 			dir[name] = item;
-			
+
 			Object.defineProperty(base.flat, rawdesc, {
 				get : function(){
 					return item.get();
@@ -170,7 +171,7 @@
 			});
 
 			item.set(value);
-		}	
+		}
 	};
 
 	base.get = function(/*str*/rawdesc){
