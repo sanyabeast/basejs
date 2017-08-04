@@ -99,6 +99,21 @@
 
 	base.eventsHandlers = {};
 
+  base.reach = function(source, path){
+    var result = source;
+    path = path.split(".");
+
+    for (var a = 0; a < path.length; a++){
+        if (typeof result[path[a]] != "undefined"){
+          result = result[path[a]];
+        } else {
+          return null;
+        }
+    }
+
+    return result;
+  };
+
 	base.on = function(rawdesc, eventName, callback, obsName){
 		obsName = obsName || ("sub-" + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2));
 		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
