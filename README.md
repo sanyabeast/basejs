@@ -66,7 +66,7 @@ console.log(base.flat)
 }*/
 ```
 
-### reach object property
+### reach object's property
 
 ```javascript
 base.reach({ foo : { bar : { buzz : { hello : "Hello!" } } } }, "foo.bar.buzz.hello");
