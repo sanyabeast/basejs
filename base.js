@@ -17,7 +17,7 @@
 }(this, function(){
 
     /*item*/
-	var Item = function(base, path, name, value){
+	var Item = function(base, path, name, value, isGetter){
 
 		Object.defineProperty(this, "base", {
 			value : base,
@@ -34,6 +34,14 @@
 			enumerable : false
 		});
 
+		if (typeof value == "function"){
+			Object.defineProperty(this, "isGetter", {
+				value : isGetter,
+				enumerable : false,
+				writable : true
+			});
+		}
+
 		this._value = value;
 	};
 
@@ -48,11 +56,15 @@
 			this.set(value);
 		},
 		set : function(value){
+			if (this.isGetter && typeof value != "function"){
+				this.isGetter = false;
+			}
+
 			this._value = value;
 			this._dispatch("change");
 		},
 		get : function(){
-			return this._value;
+			return this.isGetter ? this._value() : this._value;
 		},
 		_dispatch : function(eventName){
 			this.base._dispatch(this.fullpath, eventName);
@@ -99,20 +111,41 @@
 
 	base.eventsHandlers = {};
 
-  base.reach = function(source, path){
-    var result = source;
-    path = path.split(".");
+	base.reach = function(source, path){
+	  var result = source;
+	  path = path.split(".");
 
-    for (var a = 0; a < path.length; a++){
-        if (typeof result[path[a]] != "undefined"){
-          result = result[path[a]];
-        } else {
-          return null;
-        }
-    }
+	  for (var a = 0; a < path.length; a++){
+	      if (typeof result[path[a]] != "undefined"){
+	        result = result[path[a]];
+	      } else {
+	        return null;
+	      }
+	  }
 
-    return result;
-  };
+	  return result;
+	};
+
+	base.restObject = function(basePath, object, options){
+		options = options || {};
+		options.deep = options.deep || false;
+		options.getters = options.getters || false;
+
+		for (var k in object){
+			if (typeof object[k] != "object" || !options.deep){
+				if (options.getters){
+					base.set(basePath + "::" + k, function(){
+						return object[k];
+					}, true);
+				} else {
+					base.set(basePath + "::" + k, object[k]);
+				}
+			} else if (typeof object[k] == "object" && options.deep){
+				base.restObject(basePath + "." + k, object[k], options);
+			}
+		}
+
+	}
 
 	base.on = function(rawdesc, eventName, callback, obsName){
 		obsName = obsName || ("sub-" + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2));
@@ -163,7 +196,7 @@
 		return curr;
 	};
 
-	base.set = function(/*str*/rawdesc, /*any*/value){
+	base.set = function(/*str*/rawdesc, /*any*/value, /*bool*/isGetter){
 		var desc = rawdesc.split("::");
 		var path = desc[0];
 		var name = desc[1];
@@ -173,7 +206,7 @@
 		if (dir[name] instanceof Item){
 			dir[name].set(value);
 		} else {
-			var item = new Item(base, path, name, value);
+			var item = new Item(base, path, name, value, isGetter);
 			dir[name] = item;
 
 			Object.defineProperty(base.flat, rawdesc, {
