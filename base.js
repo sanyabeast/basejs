@@ -19,7 +19,7 @@
     /*item*/
 	var Item = function(base, path, name, value, isGetter){
 
-		Object.defineProperty(this, "base", {
+		Object.defineProperty(this, "_base", {
 			value : base,
 			enumerable : false
 		});
@@ -67,13 +67,13 @@
 			return this.isGetter ? this._value() : this._value;
 		},
 		_dispatch : function(eventName){
-			this.base._dispatch(this.fullpath, eventName);
+			this._base._dispatch(this.fullpath, eventName);
 		}
 	};
 
 	/*dir*/
 	var Dir = function(path, base){
-		Object.defineProperty(this, "base", {
+		Object.defineProperty(this, "_base", {
 			value : base,
 			enumerable : false
 		});
@@ -86,14 +86,14 @@
 
 	Object.defineProperty(Dir.prototype, "set", {
 		value : function(name, value){
-			this.base.set(this.path + "::" + name, value);
+			this._base.set(this.path + "::" + name, value);
 		},
 		enumerable : false
 	});
 
 	Object.defineProperty(Dir.prototype, "get", {
 		value : function(name){
-			return this.base.get(this.path + "::" + name);
+			return this._base.get(this.path + "::" + name);
 		},
 		enumerable : false
 	});
