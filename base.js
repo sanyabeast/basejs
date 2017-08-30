@@ -152,7 +152,7 @@
 		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
 		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
 		this.eventsHandlers[rawdesc][eventName][obsName] = callback;
-    return obsName;
+    	return obsName;
 	};
 
 	base.off = function(rawdesc, eventName, obsName){
