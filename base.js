@@ -162,7 +162,7 @@
 
 	base.off = function(rawdesc, eventName, obsName){
 		if (!obsName && !eventName){
-			return base.off(this.eventsHandlers._observers[rawdesc][0], this.eventsHandlers._observers[rawdesc][1], rawdesc);
+			if (this.eventsHandlers._observers[rawdesc]) return base.off(this.eventsHandlers._observers[rawdesc][0], this.eventsHandlers._observers[rawdesc][1], rawdesc);
 		} else {
 			this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
 			this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
