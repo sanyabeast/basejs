@@ -109,7 +109,9 @@
 
 	base.content = new Dir("", base);
 
-	base.eventsHandlers = {};
+	base.eventsHandlers = {
+		_observers : {}
+	};
 
 	base.reach = function(source, path){
 	  var result = source;
@@ -152,13 +154,22 @@
 		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
 		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
 		this.eventsHandlers[rawdesc][eventName][obsName] = callback;
+
+		this.eventsHandlers._observers[obsName] = [rawdesc, eventName];
+
     	return obsName;
 	};
 
 	base.off = function(rawdesc, eventName, obsName){
-		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
-		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
-		delete this.eventsHandlers[rawdesc][eventName][obsName];
+		if (!obsName && !eventName){
+			return base.off(this.eventsHandlers._observers[rawdesc][0], this.eventsHandlers._observers[rawdesc][1], rawdesc);
+		} else {
+			this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
+			this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
+			delete this.eventsHandlers[rawdesc][eventName][obsName];
+			delete this.eventsHandlers._observers[obsName];
+		}
+		
 	};
 
 	base._dispatch = function(rawdesc, eventName){
