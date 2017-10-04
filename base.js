@@ -149,13 +149,23 @@
 
 	}
 
-	base.on = function(rawdesc, eventName, callback, obsName){
+	base.on = function(rawdesc, eventName, callback, obsName, instantCB){
+		if (typeof obsName == "boolean"){
+			instantCB = obsName;
+			obsName = false;
+		}
+
+
 		obsName = obsName || ("sub-" + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2));
 		this.eventsHandlers[rawdesc] = this.eventsHandlers[rawdesc] || {};
 		this.eventsHandlers[rawdesc][eventName] = this.eventsHandlers[rawdesc][eventName] || {};
 		this.eventsHandlers[rawdesc][eventName][obsName] = callback;
 
 		this.eventsHandlers._observers[obsName] = [rawdesc, eventName];
+
+		if (instantCB && base.get(rawdesc)){
+			callback(base.get(rawdesc));
+		}
 
     	return obsName;
 	};
