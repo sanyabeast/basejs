@@ -268,6 +268,22 @@
 		}
 	};
 
+	base.extract = function(/*str*/path){
+		var dir = this.path(path);
+
+		var result = {};
+
+		for (var k in dir){
+			if (dir[k] instanceof Item){
+				result[k] = dir[k].value;
+			} else if (dir[k] instanceof Dir){
+				result[k] = base.extract(dir[k].path);
+			}
+		}
+
+		return result;
+	}
+
 
 	base.flat = {};
 	base.Item = Item;
